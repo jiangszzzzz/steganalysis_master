@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import pandas as pd
 from tqdm.notebook import tqdm
 import numpy as np
-from model import Net
+
 from albumentations.pytorch import ToTensorV2
 from albumentations import (
     Compose, HorizontalFlip, CLAHE, HueSaturationValue,
@@ -17,9 +17,12 @@ from albumentations import (
     IAAAdditiveGaussianNoise, GaussNoise, OpticalDistortion, RandomSizedCrop, VerticalFlip
 )
 
+from model import Efficientnet
+from model import Srnet
+
 data_dir = '/steganalysis/dataset'
 device = 'cuda'
-model = Net().to(device)
+model = Efficientnet().to(device)
 img_size = 512
 
 AUGMENTATIONS_TEST = Compose([
