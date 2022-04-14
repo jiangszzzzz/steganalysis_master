@@ -8,7 +8,10 @@ from albumentations import (
     IAAAdditiveGaussianNoise, GaussNoise, OpticalDistortion, RandomSizedCrop, VerticalFlip
 )
 import os
+
+os.environ['CUDA_VISIBLE_DEVICES'] = '0,1,2,3'
 import torch
+import torch.nn as nn
 import pandas as pd
 import numpy as np
 import random
@@ -20,8 +23,7 @@ from sklearn import metrics
 import torch.nn.functional as F
 from dataset import Alaska2Dataset
 
-from model import Srnet
-from model import Efficientnet
+import model
 
 ## 随机数 seed 生成相同随机数
 seed = 42
@@ -79,8 +81,7 @@ AUGMENTATIONS_TEST = Compose([
     ToTensorV2()
 ], p=1)
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0, 1, 2, 3"
-batch_size = 16
+batch_size = 128
 num_workers = 2
 
 # 构建数据集s
@@ -94,8 +95,14 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size 
 
 device = 'cuda'
 # 选择模型
-# model = model.Efficientnet().to(device)
-model = Srnet().to(device)
+model = model.Efficientnet().to(device)
+# model = Srnet().to(device)
+
+# 多卡并行
+device_ids = [0, 1, 2]  # 选中其中两块
+
+#torch规定：必须把参数放置在nn.DataParallel中参数device_ids[0]上，在这里device_ids=[1,2]，因此我们需要 device=torch.device("cuda:1" )
+model = nn.DataParallel(model, device_ids=device_ids)
 
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 
