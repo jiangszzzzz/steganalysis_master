@@ -1,7 +1,15 @@
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.nn.parameter as P
 from efficientnet_pytorch import EfficientNet
 import torch
+import numpy as np
+
+kv_kernal = np.array([[-1, 2, -2, 2, -1],
+                      [2, -6, 8, -6, 2],
+                      [-2, 8, -12, 8, -2],
+                      [2, -6, 8, -6, 2],
+                      [-1, 2, -2, 2, -1]], dtype=np.float32)
 
 
 class Efficientnet(nn.Module):
@@ -206,3 +214,40 @@ class Srnet(nn.Module):
         # print("FC:",fc.shape)
         out = F.log_softmax(fc, dim=1)
         return fc
+
+
+class Testnet(nn.Module):
+    def __init__(self):
+        super().__init__()  # 类继承
+
+        # rich fliter
+        kv_kernal = np.array([[-1, 2, -2, 2, -1],
+                              [2, -6, 8, -6, 2],
+                              [-2, 8, -12, 8, -2],
+                              [2, -6, 8, -6, 2],
+                              [-1, 2, -2, 2, -1]], dtype=np.float32)
+        kv_3D = [kv_kernal * 3]
+
+        self.layer1 = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=5, padding=2, bias=False)
+        self.layer1.weight = P(kv_3D)
+        self.bn1 = nn.BatchNorm2d(3)
+
+    def forward(self, x):
+        conv = self.layer1(x)
+        actv = F.relu(self.bn1(conv))
+        return actv
+
+
+# 测试模型输入输出
+if __name__ == "__main__":
+    x = torch.rand(size=(1, 3, 256, 256))  # 输入 1表示 batchsize 为一张图片， 3表示通道数， 256*256大小的图片
+    print(x.shape)
+
+    # net = Srnet()
+    # net = Efficientnet()
+    net = Testnet()
+    print(net)
+
+    output_Y = net(x)
+    print('output shape: ', output_Y.shape)
+    # print('output: ', output_Y)
