@@ -193,4 +193,6 @@ plt.figure(figsize=(15, 7))
 plt.plot(train_loss, c='r')
 plt.plot(val_loss, c='b')
 plt.legend(['train_loss', 'val_loss'])
+
+plt.savefig("Loss.png")
 plt.title('Loss Plot')
