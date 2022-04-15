@@ -95,15 +95,23 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size 
 
 device = 'cuda'
 # 选择模型
-model = model.Efficientnet().to(device)
-# model = Srnet().to(device)
+# model = model.Efficientnet()
+# model = Srnet()
+model = model.SSrnet()
+model.to(device)
 
 # 多卡并行
 device_ids = [0, 1, 2]  # 选中其中两块
 
-#torch规定：必须把参数放置在nn.DataParallel中参数device_ids[0]上，在这里device_ids=[1,2]，因此我们需要 device=torch.device("cuda:1" )
+# torch规定：必须把参数放置在nn.DataParallel中参数device_ids[0]上，在这里device_ids=[1,2]，因此我们需要 device=torch.device("cuda:1" )
 model = nn.DataParallel(model, device_ids=device_ids)
 
+# 固定ssrnet 前两层
+for name, param in model.named_parameters():
+    if 'layer0' in name:
+        param.requires_grad = False
+
+# 优化器传入参数
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
 
 
