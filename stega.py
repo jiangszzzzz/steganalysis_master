@@ -81,7 +81,7 @@ AUGMENTATIONS_TEST = Compose([
     ToTensorV2()
 ], p=1)
 
-batch_size = 128
+batch_size = 64
 num_workers = 2
 
 # 构建数据集s
@@ -96,20 +96,21 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size 
 device = 'cuda'
 # 选择模型
 # model = model.Efficientnet()
-# model = Srnet()
-model = model.SSrnet()
+model = model.Srnet()
+# model = model.SSrnet()
 model.to(device)
 
 # 多卡并行
-device_ids = [0, 1, 2]  # 选中其中两块
+device_ids = [0, 1, 2]  # 选中其中3块
 
 # torch规定：必须把参数放置在nn.DataParallel中参数device_ids[0]上，在这里device_ids=[1,2]，因此我们需要 device=torch.device("cuda:1" )
 model = nn.DataParallel(model, device_ids=device_ids)
 
 # 固定ssrnet 前两层
-for name, param in model.named_parameters():
-    if 'layer0' in name:
-        param.requires_grad = False
+# 冻结
+# for name, param in model.named_parameters():
+#     if 'layer0' in name:
+#         param.requires_grad = False
 
 # 优化器传入参数
 optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
@@ -202,12 +203,13 @@ for epoch in range(num_epochs):
         auc_score = alaska_weighted_auc(y, new_preds)
         print(f'Val Loss: {epoch_loss:.3}, Weighted AUC:{auc_score:.3}, Acc: {acc:.3}')
 
-    torch.save(model.state_dict(), f"./Srnet/epoch_{epoch + 4}_val_loss_{epoch_loss:.3}_auc_{auc_score:.3}.pth")
+# 保存模型路径
+    torch.save(model.state_dict(), f"./Srnet2/epoch_{epoch + 4}_val_loss_{epoch_loss:.3}_auc_{auc_score:.3}.pth")
 
 plt.figure(figsize=(15, 7))
 plt.plot(train_loss, c='r')
 plt.plot(val_loss, c='b')
 plt.legend(['train_loss', 'val_loss'])
 
-plt.savefig("Loss.png")
+plt.savefig("LossSrnet.png")
 plt.title('Loss Plot')
