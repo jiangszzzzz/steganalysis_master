@@ -5,6 +5,8 @@ from efficientnet_pytorch import EfficientNet
 import torch
 import numpy as np
 import torchvision.models as models
+from thop import profile
+from torch.nn.parameter import Parameter
 
 
 # kv_kernal = np.array([[-1, 2, -2, 2, -1],
@@ -23,6 +25,17 @@ class Efficientnet(nn.Module):
     def forward(self, x):
         feat = self.model.extract_features(x)
         feat = F.avg_pool2d(feat, feat.size()[2:]).reshape(-1, 1280)
+        return self.dense_output(feat)
+
+class Efficientnet4(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = EfficientNet.from_pretrained('efficientnet-b4')
+        self.dense_output = nn.Linear(1792, 4)
+
+    def forward(self, x):
+        feat = self.model.extract_features(x)
+        feat = F.avg_pool2d(feat, feat.size()[2:]).reshape(-1, 1792)
         return self.dense_output(feat)
 
 
@@ -491,19 +504,26 @@ class DeepWise_PointWise_Conv(nn.Module):
         return out
 
 
+
+
+
 # 测试模型输入输出
 if __name__ == "__main__":
     x = torch.randn(size=(1, 3, 256, 256))  # 输入 1表示 batchsize 为一张图片， 3表示通道数， 256*256大小的图片
     print(f'输入的维度：{x.shape}')
 
     # net = Srnet()
-    # net = Efficientnet()
+    net = Efficientnet4()
     # net = Testnet()
     # net = DeepWise_PointWise_Conv(1,1)
-    net = SSrnet()
+    # net = SSrnet()
 
-    # stat 查看模型的详细信息
-    # stat(net, (3,224,224))
+    ### stat 查看模型的详细信息
+    stat(net, (3,224,224))
+
+    # flops, params = profile(net, inputs=(x,))
+    # print('FLOPs = ' + str(flops / 1000 ** 3) + 'G')
+    # print('Params = ' + str(params / 1000 ** 2) + 'M')
 
     output_Y = net(x)
     print('output shape: ', output_Y.shape)

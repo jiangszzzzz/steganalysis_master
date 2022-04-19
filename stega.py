@@ -24,6 +24,7 @@ import torch.nn.functional as F
 from dataset import Alaska2Dataset
 
 import model
+from YeNet import YeNet
 
 ## 随机数 seed 生成相同随机数
 seed = 42
@@ -81,7 +82,7 @@ AUGMENTATIONS_TEST = Compose([
     ToTensorV2()
 ], p=1)
 
-batch_size = 64
+batch_size = 32
 num_workers = 2
 
 # 构建数据集s
@@ -95,9 +96,11 @@ valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=batch_size 
 
 device = 'cuda'
 # 选择模型
-# model = model.Efficientnet()
-model = model.Srnet()
+# model = model.Efficientnet4()
+# model = model.Srnet()
 # model = model.SSrnet()
+model = YeNet()
+
 model.to(device)
 
 # 多卡并行
@@ -204,12 +207,12 @@ for epoch in range(num_epochs):
         print(f'Val Loss: {epoch_loss:.3}, Weighted AUC:{auc_score:.3}, Acc: {acc:.3}')
 
 # 保存模型路径
-    torch.save(model.state_dict(), f"./Srnet2/epoch_{epoch + 4}_val_loss_{epoch_loss:.3}_auc_{auc_score:.3}.pth")
+    torch.save(model.state_dict(), f"./Yenet/epoch_{epoch + 4}_val_loss_{epoch_loss:.3}_auc_{auc_score:.3}.pth")
 
 plt.figure(figsize=(15, 7))
 plt.plot(train_loss, c='r')
 plt.plot(val_loss, c='b')
 plt.legend(['train_loss', 'val_loss'])
 
-plt.savefig("LossSrnet.png")
+plt.savefig("Yenetloss.png")
 plt.title('Loss Plot')
